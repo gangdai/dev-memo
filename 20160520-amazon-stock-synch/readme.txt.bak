@@ -1,0 +1,24 @@
+Based on our current situation and the answer Case ID1502367982 (not possible to have multiple skus for the same asin number) it shows that the best way to handle this is to have a dictionary to match up the old/new sku discrepancy:
+
+Steps
+
+1. download active listing report from amazon sellercentral ( INVENTORY -> Inventory Reports -> Active Listings Report -> Download)
+
+2. Save the file to local
+
+3. generate a dictionary php file (e.g. contains the sku matching array) by config & run amazon_sku_dict.php
+
+4. copy the dictionary php file to /admin/includes/
+
+5. modify files:
+/admin/file_manager_delivery.php
+/includes/languages/english/file_manager_delivery.php
+/includes/functions/general_add.php
+
+/admin/includes/amazon_sku_dict.php (new file)
+/admin/includes/javascript/stock_admin/stock_admin.php
+/admin/stock.php
+/admin/includes/javascript/orders_returns/rm.php
+/admin/includes/config_added_values.php
+
+
