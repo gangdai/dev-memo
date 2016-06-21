@@ -1,0 +1,1 @@
+Loading local json file with json_decode() is much much faster than including a big php file containing an array. it also has the advantage of being a format that most languages can manipulate directly.

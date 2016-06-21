@@ -1,0 +1,9 @@
+ref:
+http://stackoverflow.com/questions/10434913/accessing-big-arrays-in-php
+http://stackoverflow.com/questions/16108399/deny-access-to-specific-file-types-in-specific-directory
+
+
+useful quote:
+...
+For one of my projects in which a database was not an option, I faced the same problem of loading big (by big I mean series of 3 MB files) php files containing arrays in memory and I was looking for options to maximize the performances. I found a very easy one which was caching these files on the disk as json at first use. I divided load time by 3 and also memory peak consumption by 30%. Loading local json file with json_decode() is much much faster than including a big php file containing an array. it also has the advantage of being a format that most languages can manipulate directly. Hope that helps.
+...
