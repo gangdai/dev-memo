@@ -1,8 +1,5 @@
 <?php
-/*
-Copyright (c) 2004 Attitude Group Ltd
-Released under the GNU General Public License
-*/
+
 
   require('includes/application_top.php');
 
@@ -70,30 +67,30 @@ Released under the GNU General Public License
       <meta name="rights-standard" content="<?php echo STORE_NAME;?>" />
 
       <!--CSS-->
-      <link rel="stylesheet" href="includes/z-dhtml/2017/css/normalize.css" />
+      <link rel="stylesheet" href="css/normalize.css" />
       <link rel="stylesheet" href="styles.css" />
 
       <link rel="shortcut icon" href="//<?php echo ABS_STORE_SITE . DIR_WS_HTTP_CATALOG . DIR_WS_IMAGES . 'fav_icon.ico';?>" />
       <link rel="apple-touch-icon-precomposed" href="//<?php echo ABS_STORE_SITE . DIR_WS_HTTP_CATALOG . DIR_WS_IMAGES . 'ios_icon.png';?>" />
 
       <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css" />
-      <link rel="stylesheet" href="includes/z-dhtml/2017/css/responsive.css" />
+      <link rel="stylesheet" href="css/responsive.css" />
 
       <!--JS-->
       <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
       <script src="//code.jquery.com/jquery-migrate-1.4.0.min.js"></script>
 
-      <script src="includes/z-dhtml/2017/js/featherlight.min.js" defer></script>
+      <script src="js/featherlight.min.js" defer></script>
 
-      <script src="includes/z-dhtml/2017/js/jquery.mmenu.min.js" defer></script>
-      <script src="includes/z-dhtml/2017/js/2017.js" defer></script>
+      <script src="js/jquery.mmenu.min.js" defer></script>
+      <script src="js/2017.js" defer></script>
 
       <!--CSS-->
-      <link rel="stylesheet" href="includes/z-dhtml/2017/css/jquery.mmenu.css" />
-      <link rel="stylesheet" href="includes/z-dhtml/2017/css/jquery.mmenu.positioning.css" />
-      <link rel="stylesheet" href="includes/z-dhtml/2017/css/jquery.mmenu.pagedim.css" />
+      <link rel="stylesheet" href="css/jquery.mmenu.css" />
+      <link rel="stylesheet" href="css/jquery.mmenu.positioning.css" />
+      <link rel="stylesheet" href="css/jquery.mmenu.pagedim.css" />
 
-      <link rel="stylesheet" href="includes/z-dhtml/2017/css/featherlight.min.css" />
+      <link rel="stylesheet" href="css/featherlight.min.css" />
 		  <script>
 			/*<![CDATA[*/
 			$(document).ready(function(){
@@ -102,7 +99,7 @@ Released under the GNU General Public License
 			/*]]>*/
 		  </script>
 
-      <script type="text/javascript" src="includes/z-dhtml/manualorder/bundle.js"></script>
+      <script type="text/javascript" src="bundle.js"></script>
       <style>
 /*shopping cart*/
 	.cart-items{width:100%; margin:20px 0; border-top:solid 1px #dfdfdf; text-align:left;}
@@ -315,7 +312,7 @@ Released under the GNU General Public License
                       $manufacturers_array[] = array('id' => '', 'text' => "Please Select");
                       
                             while ($manufacturers = tep_db_fetch_array($manufacturers_query)) {
-                              if ($manufacturers['manufacturers_name'] == 'I & K') continue;
+                              if ($manufacturers['manufacturers_name'] == 'IK') continue;
                               $manufacturers_array[] = array('id' => $manufacturers['manufacturers_id'],
                                                              'text' => $manufacturers['manufacturers_name']);
                             }
