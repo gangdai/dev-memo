@@ -1,0 +1,17 @@
+#restrict access to the following file format
+<FilesMatch "\.(?:json|php|py|rb|csv|txt)$">
+Order allow,deny
+Deny from all
+</FilesMatch>
+
+#exception to file with amber_amber*.txt
+<FilesMatch "amber_amber.*\.txt$">
+    Order Allow,Deny
+    Allow from all
+</FilesMatch>
+
+#exception to file with mp_*.txt
+<FilesMatch "mp_.*\.csv$">
+    Order Allow,Deny
+    Allow from all
+</FilesMatch>
