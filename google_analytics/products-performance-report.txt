@@ -1,0 +1,23 @@
+google analytics product performance report:
+    e.g.
+    top ten cities for a certain product
+    top ten certain products
+    top five buys in England, Ireland, Scotland and Wales
+
+Never manage to memerise this sort of report so here is a quick note for avoiding muddling next time
+
+Report:
+
+Conversions -> E-Commerce -> Product Performance ->
+    set Primary
+    -> Add segment -> New Segment -> Location -> 
+        Country contain "" 
+        OR
+        Region contain ""
+        ...
+        etc
+
+        -> save to add the segment
+    
+
+
