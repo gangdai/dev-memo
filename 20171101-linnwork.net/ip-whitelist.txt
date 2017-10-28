@@ -1,0 +1,27 @@
+Could you please whitelist the following IP addresses (these are used by various Linnworks processes):
+34.252.154.168
+34.252.111.6
+34.193.131.171
+34.253.22.117
+134.213.138.99
+134.213.138.101
+134.213.138.102
+162.13.161.18
+162.13.161.17
+95.138.179.101
+95.138.179.84
+95.138.179.88
+95.138.179.96
+95.138.179.32
+95.138.179.216
+95.138.179.227
+52.209.200.30
+54.77.19.171
+52.213.104.87
+34.249.70.50
+134.213.138.229
+35.154.153.82
+It may also be worthwhile to whitelist the IP address of the server that hosts your Linnworks database, in case you would need to connect to it:
+34.248.100.43
+The following address is used by our Virtual Printer client when sending requests between Linnworks.net and your printers:
+54.231.136.90 and could you please whitelist our office address 195.50.210.208

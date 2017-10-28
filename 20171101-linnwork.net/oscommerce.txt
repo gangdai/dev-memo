@@ -1,0 +1,211 @@
+Query Designer for the oscommerce integration:
+
+ [GetNewOrdersQuery]
+ SELECT
+      o.orders_id as orderId,
+      case when ot.value is null then 0 else (ot.value * o.currency_value) end AS fPostageCost,
+      o.date_purchased AS dReceievedDate,
+      o.delivery_name as cFullName,
+      o.customers_email_address as cEmailAddress,
+      '' as cShippingAddress,
+      o.delivery_postcode as cPostCode,
+      case when ott.value is null then 0 else (ott.value * o.currency_value) end AS fTotalCharge,
+      o.currency as cCurrency,
+      case when ottt.value is null then 0 else ottt.value end AS fTax,
+      o.delivery_country as Country,
+      '' as PostalServiceTag,
+      '' as PackagingGroup,
+      o.orders_id as ReferenceNum,
+      concat(o.delivery_house_name, ' ', o.delivery_street_address) as addAddress1,
+      o.delivery_suburb as addAddress2,
+      o.delivery_city as addTown,
+      o.delivery_state as addRegion,
+      o.customers_telephone as CustomerPhoneNumber,
+      o.delivery_company as addCompany,
+      o.billing_company as BillingCompany,
+      o.billing_name as BillingName,
+      concat(o.billing_house_name, ' ', o.billing_street_address) as BillingAddress1,
+      o.billing_suburb as BillingAddress2,
+      '' as BillingAddress3,
+      o.billing_state as BillingRegion,
+      o.billing_city as BillingTown,
+      o.billing_country as BillingCountry,
+      o.billing_postcode as BillingPostCode,
+      o.payment_method as PaymentMethod,
+      ot.title as ShippingMethod
+      FROM orders o
+      LEFT OUTER JOIN orders_total ot ON ot.orders_id = o.orders_id AND ot.class = 'ot_shipping'
+      LEFT OUTER JOIN orders_total ott ON ott.orders_id = o.orders_id AND ott.class = 'ot_total'
+      LEFT OUTER JOIN orders_total ottt ON ottt.orders_id = o.orders_id AND ottt.class = 'ot_tax'
+      WHERE o.orders_status IN ('1') and o.date_purchased > (NOW() - INTERVAL 10 DAY);
+
+    "o.date_purchased > (NOW() - INTERVAL 10 DAY)" limits the results returned only to orders placed within 10 days, without this the integration will fail (in query designer/test returns a blank response)
+    "ReferenceNum" is the channel orderID
+
+
+
+[GetOrderItemsQuery]
+SELECT
+    op.orders_id as orderid,
+    op.orders_products_id as orderitemid,
+    op.products_model as ItemNumber,
+    op.products_quantity as Quantity,
+    ROUND(op.final_price * o.currency_value* (1+ op.products_tax/100),2) as CostPerUnit,
+    op.products_name as ItemTitle,
+    '' as ProductOption,
+    op.products_tax as ItemTaxRate
+FROM orders_products op 
+INNER JOIN orders o ON o.orders_id = op.orders_id
+WHERE o.orders_status IN ('1');
+
+        Modification to have the variants shown after the item title: (ref: https://stackoverflow.com/questions/1067428/combine-multiple-child-rows-into-one-row-mysql)
+
+        SELECT
+            op.orders_id as orderid,
+            op.orders_products_id as orderitemid,
+            op.products_model as ItemNumber,
+            op.products_quantity as Quantity,
+            ROUND(op.final_price * o.currency_value* (1+ op.products_tax/100),2) as CostPerUnit,
+            if (opv.orders_products_id is not null, concat(op.products_name, ' ', GROUP_CONCAT(opv.value_title SEPARATOR ' ')), op.products_name) as ItemTitle,
+            GROUP_CONCAT(opv.value_title) as ProductOption,
+            op.products_tax as ItemTaxRate,
+            concat(op.orders_id, '-', op.orders_products_id) as unique_orderitem
+        FROM orders_products op 
+        INNER JOIN orders o ON o.orders_id = op.orders_id
+        left join osc_orders_products_variants opv on op.orders_products_id=opv.orders_products_id
+        WHERE o.orders_status IN ('1')
+        group by unique_orderitem;
+
+
+[GetOrderNotesQuery]
+SELECT 
+    o.orders_id as orderid,
+    osh.comments as Note
+FROM orders o
+INNER JOIN orders_status_history osh ON osh.orders_id = o.orders_id where o.date_purchased > (NOW() - INTERVAL 8 DAY);
+
+
+[MarkasProcessedOrders]
+UPDATE
+orders
+SET
+orders_status = '3',
+orders_date_finished = '[{dProcessedOn}]'
+WHERE orders_id = '[{ReferenceNum}]' and orders_status != '3';
+
+--GO;--
+
+insert into orders_status_history (orders_id, orders_status_id, date_added, customer_notified, tracking_no)
+select orders_id, '3' as orders_status_id, now() as date_added, '0' as customer_notified, '[{PostalTrackingNumber}]' as tracking_no
+from orders_status_history where orders_id='[{ReferenceNum}]' and not exists (select orders_id from orders_status_history where orders_status_id = '3' and orders_id='[{ReferenceNum}]');
+
+    "--GO;--" is a separator for executing multiple sql statement
+
+
+[GetInventoryList]
+SELECT 
+    p.products_model as SKU,
+    pd.products_name as ItemTitle,
+    p.products_quantity as AvailableQuantity,
+    p.products_price as RetailPrice
+FROM products p
+INNER JOIN products_description pd on pd.products_id = p.products_id;
+
+
+[UpdateInventory]
+UPDATE 
+products
+SET
+products_quantity = [{NewQuantity}],
+products_status = CASE WHEN [{NewQuantity}] = 0 THEN 0 ELSE 1 END
+WHERE products_model = '[{ChannelSKU}]';
+
+    My modification:
+
+    UPDATE 
+    products
+    SET
+    products_quantity = [{NewQuantity}]
+    WHERE products_model = '[{ChannelSKU}]';
+    
+    Don't update the products_status
+
+
+[GetShippingServices]
+SELECT
+          ot.title as ServiceName,
+          ot.title as Tag
+FROM orders_total ot inner join orders o on ot.orders_id=o.orders_id
+WHERE ot.class = 'ot_shipping' and o.date_purchased > (NOW() - INTERVAL 20 DAY)
+GROUP BY title
+
+
+[GetPaymentServices]
+SELECT
+          payment_method as ServiceName,
+          payment_method as Tag
+FROM orders where orders.date_purchased > (NOW() - INTERVAL 20 DAY)
+GROUP BY payment_method
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Related reference:
+
+20170717: Linnworks add additional number to the channel order id. Please confirm if Linnworks is designed to do so or if it is a query issue. Can this be changed so that in Linnworks order reference number matches Oscommerce order id.
+Example order 100045 where channel order id is 326803 and in Linnworks it appears as 326803-20170713223453
+
+Hello,
+
+Thank you for clarifying.
+
+I can see that there are currently open orders in your Linnworks from Oscommerce. If we now updated your SQL query that pulls Oscommerce orders and changed the way reference numbers are displayed, then your Oscomerce open orders that you have not displatched yet would be downloaded once again (ie you would get duplicated orders in your open orders in Linnworks).
+
+In order to avoid this you would need to delete any order in open orders that is not marked as despatched on your Oscommerce (as otherwise the order will be re-downloaded) and then Reference number can be changed and orders can be downloaded from Oscommerce once again.
+
+Reference number can be changed by amending the GetNewOrdersQuery in Linnworks Settings -> Channel Integration->Config-> Query Designer -> GetNewOrdersQuery and changing this line of the SQL query 
+concat(o.orders_id,'-',CONVERT(date_purchased, UNSIGNED)) as ReferenceNum,
+to this line
+o.orders_id as ReferenceNum,
+(screenshots attached)
+
+After that changes need to be saved by clicking Save button in the  Config window of the Oscommerce channel integration.
+
+
+If required, we can amend this SQL query for you but you would need to confirm once you have deleted the Oscommerce orders from your open orders screen in Linnworks so that you do not get any duplicated orders after we amend your SQL query.
+
+Best Regards,
+Natalja 
