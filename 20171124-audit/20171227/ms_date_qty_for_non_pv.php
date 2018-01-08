@@ -20,6 +20,21 @@
 			fwrite($fh, $output_string);
 			fclose($fh);
     }
+
+    //Display Attributes name with a given raw string from DB
+    function display_att_price($pid, $rawstr) {
+  	    if (!tep_not_null($rawstr)) return null;
+  	    global $languages_id;
+    	//display the actual opt_val
+    	$opt_val = explode(',', $rawstr);
+    	$attprice=0;
+    	foreach($opt_val as $val) {
+       	    $opt_optval=explode('-', $val,2);
+            $price_single_att = tep_db_fetch_array(tep_db_query("select options_values_price from products_attributes where products_id = '" . (int)$pid . "' and options_id = '" . (int)$opt_optval[0] . "' and options_values_id = '" . (int)$opt_optval[1] . "'"));
+            if ((float)$price_single_att['options_values_price'] >0) $attprice += (float)$price_single_att['options_values_price'];
+        }
+        return $attprice;
+    }
 //header("Content-type: text/plain");
 //header("Content-Disposition: attachment; filename=date.csv");
     //$onlineshop = " cash_carry !=0 and orders_ref_1 >0 ";
@@ -28,9 +43,9 @@
     $gethair = 1;
 
     if (!$gethair)
-        $specials_string = "brand, name, cat, att, cost, qty" . "\r\n";
+        $specials_string = "brand, name, cat, att, price, qty" . "\r\n";
     else
-        $specials_string = "categories, name, cat, att, cost, qty" . "\r\n";
+        $specials_string = "categories, name, cat, att, price, qty" . "\r\n";
     $display_only_instock = 1;
 
     $raw1 = "SELECT manufacturers_id,manufacturers_name FROM manufacturers union all select NULL as manufacturers_id, NULL as manufacturers_name";
@@ -40,18 +55,36 @@
         if ($qq1['manufacturers_id'] == 1 || $qq1['manufacturers_id'] == 62 || $qq1['manufacturers_id'] == 163 || $qq1['manufacturers_id']==168) {
             if ($gethair<1) continue;
         //if ($qq1['manufacturers_id'] == 62) {    
-            $raw2 = "select p.products_id, p.products_quantity, p.products_model, p.products_tax_class_id, p.products_status, pd.products_name, ps.products_stock_id, ps.products_stock_attributes, ps.products_stock_quantity, p2c.categories_id, cd.categories_name, pb.bundle_id from products p left join products_stock ps on p.products_id=ps.products_id left join products_to_categories p2c on p.products_id=p2c.products_id left join products_bundles pb on p.products_id=pb.bundle_id left join categories_description cd on p2c.categories_id=cd.categories_id, products_description pd where p.products_status=1 and p.products_id=pd.products_id and pd.language_id = '1' and p.manufacturers_id = '" . $qq1['manufacturers_id'] . "' order by p.products_id, p2c.categories_id, pd.products_name, ps.products_stock_attributes";
+            $raw2 = "select p.products_id, p.products_quantity, p.products_model, p.products_price, p.products_tax_class_id, p.products_status, pd.products_name, ps.products_stock_id, ps.products_stock_attributes, ps.products_stock_quantity, p2c.categories_id, cd.categories_name, pb.bundle_id from products p left join products_stock ps on p.products_id=ps.products_id left join products_to_categories p2c on p.products_id=p2c.products_id left join products_bundles pb on p.products_id=pb.bundle_id left join categories_description cd on p2c.categories_id=cd.categories_id, products_description pd where p.products_status=1 and p.products_id=pd.products_id and pd.language_id = '1' and p.manufacturers_id = '" . $qq1['manufacturers_id'] . "' order by p.products_id, p2c.categories_id, pd.products_name, ps.products_stock_attributes";
 
             $brand_name = preg_replace("/\//", "", $qq1['manufacturers_name']);
             $specials_string .= $brand_name . ",,,,," . "\r\n";
-            $temp_1 = [];
+            $temp_sku = [];
             $products_query = tep_db_query($raw2);
             $temp_cat = [];
+            $skip_25strands = ["8-452", "8-453", "8-454", "8-455", "8-456", "8-457", "8-458","8-55","8-56","8-57","8-58","8-59","8-60","8-61","8-63","8-64","8-65","8-66","8-67","8-68","8-69"];
             while($products_array = tep_db_fetch_array($products_query)) {
-                if (!in_array($products_array['products_id'], $temp_1)) $temp_1[]=$products_array['products_id'];
+
+                //sku
+                if (tep_not_null($products_array['products_stock_attributes']) && !tep_not_null($products_array['parent_id'])) {
+                    //skip pre-bonded > 25strand
+                    if (preg_match("/8-452|8-453|8-454|8-455|8-456|8-457|8-458|8-55|8-56|8-57|8-58|8-59|8-60|8-61|8-63|8-64|8-65|8-66|8-67|8-68|8-69/i", $products_array['products_stock_attributes'])) {
+                        continue;
+                    }
+
+                    //attribute
+                    $t_temp_sku = $products_array['products_id'] . "|" . $products_array['products_stock_attributes'];
+                    $t_products_prices = $products_array['products_price'] + display_att_price($products_array['products_id'], $products_array['products_stock_attributes']);
+                } else {
+                    $t_temp_sku = $products_array['products_id'];
+                    $t_products_prices = $products_array['products_price'];
+                }
+
+                if (!in_array($t_temp_sku, $temp_sku)) $temp_sku[]=$t_temp_sku;
                 else continue;
+
                 $products_array['categories_name'] = preg_replace("/\//", "", $products_array['categories_name']);
-                $temp_cat[$products_array['categories_name']][] = ["products_id" => $products_array['products_id'], "products_quantity" => $products_array['products_quantity'], "products_model" => $products_array['products_model'], "products_buying_price" => $products_array['products_buying_price'], "products_tax_class_id" => $products_array['products_tax_class_id'], "parent_id" => $products_array['parent_id'], "has_children" => $products_array['has_children'], "products_status" => $products_array['products_status'], "products_name" => $products_array['products_name'], "products_stock_id" => $products_array['products_stock_id'], "products_stock_attributes" => $products_array['products_stock_attributes'], "products_stock_quantity" => $products_array['products_stock_quantity'], "categories_id" => $products_array['categories_id'], "categories_name" => $products_array['categories_name'], "bundle_id" => $products_array['bundle_id']];
+                $temp_cat[$products_array['categories_name']][] = ["products_id" => $products_array['products_id'], "products_quantity" => $products_array['products_quantity'], "products_model" => $products_array['products_model'], "products_price" => $t_products_prices, "products_tax_class_id" => $products_array['products_tax_class_id'], "parent_id" => $products_array['parent_id'], "has_children" => $products_array['has_children'], "products_status" => $products_array['products_status'], "products_name" => $products_array['products_name'], "products_stock_id" => $products_array['products_stock_id'], "products_stock_attributes" => $products_array['products_stock_attributes'], "products_stock_quantity" => $products_array['products_stock_quantity'], "categories_id" => $products_array['categories_id'], "categories_name" => $products_array['categories_name'], "bundle_id" => $products_array['bundle_id']];
             }
 //OSCLogger::writeLog($temp_cat, OSCLogger::DEBUG);
 //exit;
@@ -128,15 +161,15 @@
                     }
 
                     if ((int)$v1['parent_id']>0) {
-                        $print_pv_array[$display_name . "||" . $att_str . "||" . $v1['products_id']] = array('pid' => $v1['products_id'], 'pstatus' => $v1['products_status'], 'pname' => $display_name, 'products_buying_price' => $v1['products_buying_price'], 'model' => $display_model, 'barcode' => $barcode, 'qty' => $product_qty, 'supplier' => $suppliers_undelivered_qty, 'unique' => $product_unique, 'checklogic' => $checklogic);
+                        $print_pv_array[$display_name . "||" . $att_str . "||" . $v1['products_id']] = array('pid' => $v1['products_id'], 'pstatus' => $v1['products_status'], 'pname' => $display_name, 'products_price' => $v1['products_price'], 'model' => $display_model, 'barcode' => $barcode, 'qty' => $product_qty, 'supplier' => $suppliers_undelivered_qty, 'unique' => $product_unique, 'checklogic' => $checklogic);
                         continue;
                     }
-                    $specials_string .= "," . $display_name . "," . "," . $att_str . "," . $v1['products_buying_price'] . "," . $product_qty . "\r\n";
+                    $specials_string .= "," . $display_name . "," . "," . $att_str . "," . $v1['products_price'] . "," . $product_qty . "\r\n";
                 }
     		    ksort($print_pv_array);
     		    foreach ($print_pv_array as $k2 => $v3) {
     		  	    $display_pv = explode("||", $k2);
-                    $specials_string .= "," . $v3['pname'] . "," . "," . $display_pv[1] . "," . $v3['products_buying_price'] . "," . $v3['qty'] . "\r\n";
+                    $specials_string .= "," . $v3['pname'] . "," . "," . $display_pv[1] . "," . $v3['products_price'] . "," . $v3['qty'] . "\r\n";
     		    }
 
                 //$cached_file = $brand_name . "_" . $k . ".csv";
@@ -145,10 +178,10 @@
             continue;
         } elseif (tep_not_null($qq1['manufacturers_id'])) {
             if ($gethair>0) continue;
-            $raw2 = "select p.products_id, p.products_quantity, p.products_model, p.products_tax_class_id, p.products_status, pd.products_name, ps.products_stock_id, ps.products_stock_attributes, ps.products_stock_quantity, pb.bundle_id from products p left join products_stock ps on p.products_id=ps.products_id left join products_bundles pb on p.products_id=pb.bundle_id, products_description pd where p.products_status=1 and p.products_id=pd.products_id and pd.language_id = '1' and p.manufacturers_id = '" . $qq1['manufacturers_id'] . "' order by p.products_id, p.products_model, pd.products_name, ps.products_stock_attributes";
+            $raw2 = "select p.products_id, p.products_quantity, p.products_model, p.products_price, p.products_tax_class_id, p.products_status, pd.products_name, ps.products_stock_id, ps.products_stock_attributes, ps.products_stock_quantity, pb.bundle_id from products p left join products_stock ps on p.products_id=ps.products_id left join products_bundles pb on p.products_id=pb.bundle_id, products_description pd where p.products_status=1 and p.products_id=pd.products_id and pd.language_id = '1' and p.manufacturers_id = '" . $qq1['manufacturers_id'] . "' order by p.products_id, p.products_model, pd.products_name, ps.products_stock_attributes";
         } else {
             if ($gethair>0) continue;
-            $raw2 = "select p.products_id, p.products_quantity, p.products_model, p.products_tax_class_id, p.products_status, pd.products_name, ps.products_stock_id, ps.products_stock_attributes, ps.products_stock_quantity, pb.bundle_id from products p left join products_stock ps on p.products_id=ps.products_id left join products_bundles pb on p.products_id=pb.bundle_id, products_description pd where p.products_status=1 and p.products_id=pd.products_id and pd.language_id = '1' and (p.manufacturers_id is null or p.manufacturers_id <1) order by p.products_id, p.products_model, pd.products_name, ps.products_stock_attributes";
+            $raw2 = "select p.products_id, p.products_quantity, p.products_model, p.products_price, p.products_tax_class_id, p.products_status, pd.products_name, ps.products_stock_id, ps.products_stock_attributes, ps.products_stock_quantity, pb.bundle_id from products p left join products_stock ps on p.products_id=ps.products_id left join products_bundles pb on p.products_id=pb.bundle_id, products_description pd where p.products_status=1 and p.products_id=pd.products_id and pd.language_id = '1' and (p.manufacturers_id is null or p.manufacturers_id <1) order by p.products_id, p.products_model, pd.products_name, ps.products_stock_attributes";
         }
 
 //$specials_string .= $brand_name . "\r\n";
@@ -161,10 +194,18 @@
             }
 
             $specials_string .= $brand_name . ", , , , ," . "\r\n";
-            $temp_1 = [];
+            $temp_sku = [];
             $print_pv_array = array();
     		while($products_array = tep_db_fetch_array($products_query)) {
-                if (!in_array($products_array['products_id'], $temp_1)) $temp_1[]=$products_array['products_id'];
+
+                if (tep_not_null($products_array['products_stock_attributes']) && !tep_not_null($products_array['parent_id'])) {
+                    //attribute
+                    $t_temp_sku = $products_array['products_id'] . "|" . $products_array['products_stock_attributes'];
+                } else {
+                    $t_temp_sku = $products_array['products_id'];
+                }
+
+                if (!in_array($t_temp_sku, $temp_sku)) $temp_sku[]=$t_temp_sku;
                 else continue;
 
               //display attributes
@@ -238,15 +279,15 @@
                 }
 
                 if ((int)$products_array['parent_id']>0) {
-                    $print_pv_array[$display_name . "||" . $att_str . "||" . $products_array['products_id']] = array('pid' => $products_array['products_id'], 'pstatus' => $products_array['products_status'], 'pname' => $display_name, "products_buying_price" => $products_array['products_buying_price'], 'model' => $display_model, 'barcode' => $barcode, 'qty' => $product_qty, 'supplier' => $suppliers_undelivered_qty, 'unique' => $product_unique, 'checklogic' => $checklogic);
+                    $print_pv_array[$display_name . "||" . $att_str . "||" . $products_array['products_id']] = array('pid' => $products_array['products_id'], 'pstatus' => $products_array['products_status'], 'pname' => $display_name, "products_price" => $products_array['products_price'], 'model' => $display_model, 'barcode' => $barcode, 'qty' => $product_qty, 'supplier' => $suppliers_undelivered_qty, 'unique' => $product_unique, 'checklogic' => $checklogic);
                     continue;
                 }
-                $specials_string .= "," . $display_name . "," . "," . $att_str . "," . $products_array['products_buying_price'] . "," . $product_qty . "\r\n";
+                $specials_string .= "," . $display_name . "," . "," . $att_str . "," . $products_array['products_price'] . "," . $product_qty . "\r\n";
     		}
     		    ksort($print_pv_array);
     		    foreach ($print_pv_array as $k => $v) {
     		  	    $display_pv = explode("||", $k);
-                    $specials_string .= "," . $v['pname'] . "," . "," . $display_pv[1] . "," . $products_array['products_buying_price'] . "," . $v['qty'] . "\r\n";
+                    $specials_string .= "," . $v['pname'] . "," . "," . $display_pv[1] . "," . $products_array['products_price'] . "," . $v['qty'] . "\r\n";
     		    }
 //$specials_string .= "\r\n";
             //$cached_file = $brand_name . ".csv";
@@ -255,12 +296,11 @@
     }
 
     if ($gethair>0) write_to_file($specials_string, "h_stockcount" . ".csv" );
-    else write_to_file($specials_string, "ha_stockcount" . ".csv" );
+    else write_to_file($specials_string, "hc_stockcount" . ".csv" );
 
 //echo substr($specials_string, 0, -1);
 
 exit;
     
-
 
 ?>
