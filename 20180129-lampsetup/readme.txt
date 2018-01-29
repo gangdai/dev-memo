@@ -1,6 +1,6 @@
 1. Apache 2.4.29
 
-Download Apache 2.4.29 x64: Here
+Download Apache 2.4.29 x64: https://www.apachehaus.com/cgi-bin/download.plx#APACHE24VC14
 
 Download and install the Microsoft Visual C++ Redistributable for Visual Studio 2017(VC15) OR Visual Studio C++ 2015 (VC14)
 
