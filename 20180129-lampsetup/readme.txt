@@ -112,28 +112,26 @@ Mysql5.7.21: https://dev.mysql.com/downloads/windows/installer/5.7.html
 
 
 
-update 
-
-to enable the openssl/curl etc module 
-
-it need to add the following to apache2.4/conf/httpd.conf:
-
-LoadFile "C:/php7/libcrypto-1_1-x64.dll"
-LoadFile "C:/php7/libssl-1_1-x64.dll"
-LoadFile "C:/php7/libssh2.dll"
-
-like:
+Please also note that it's necessary to load php dll files when certain php modules are needed: e.g. you will need to add the LoadFile directive into the httpd.conf
 
 ....
 
-#for php module curl/openssl
-LoadFile "d:/php7/libcrypto-1_1-x64.dll"
-LoadFile "d:/php7/libssl-1_1-x64.dll"
-LoadFile "d:/php7/libssh2.dll"
-#for php curl/openssl
+#load file for php module
+#php module curl/openssl
+LoadFile "d:/programs/lamp/php7214/libcrypto-1_1-x64.dll"
+LoadFile "d:/programs/lamp/php7214/libssl-1_1-x64.dll"
+LoadFile "d:/programs/lamp/php7214/libssh2.dll"
+#php module curl/openssl
+
+#php module intl
+LoadFile "d:/programs/lamp/php7214/icudt63.dll"
+LoadFile "d:/programs/lamp/php7214/icuin63.dll"
+LoadFile "d:/programs/lamp/php7214/icuio63.dll"
+LoadFile "d:/programs/lamp/php7214/icuuc63.dll"
+#php module intl
 
 AddHandler application/x-httpd-php .php
 AddType application/x-httpd-php .php .html
-LoadModule php7_module "d:/php7/php7apache2_4.dll"
-PHPIniDir "d:/php7/"
+LoadModule php7_module "d:/programs/lamp/php7214/php7apache2_4.dll"
+PHPIniDir "d:/programs/lamp/php7214/"
 ....
