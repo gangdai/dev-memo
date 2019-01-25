@@ -112,7 +112,7 @@ Mysql5.7.21: https://dev.mysql.com/downloads/windows/installer/5.7.html
 
 
 
-Please also note that it's necessary to load php dll files when certain php modules are needed: e.g. you will need to add the LoadFile directive into the httpd.conf
+Please also note that you may need to add the LoadFile directive within the httpd.conf to load php dll files when certain php modules are needed, since it's not sufficient to just simply uncomment the extension line (e.g. ;extension=curl) within the php.ini
 
 ....
 
