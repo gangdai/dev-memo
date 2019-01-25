@@ -108,3 +108,32 @@ php7.1.13: http://php.net/downloads.php
 
 Mysql5.7.21: https://dev.mysql.com/downloads/windows/installer/5.7.html
 
+
+
+
+
+update 
+
+to enable the openssl/curl etc module 
+
+it need to add the following to apache2.4/conf/httpd.conf:
+
+LoadFile "C:/php7/libcrypto-1_1-x64.dll"
+LoadFile "C:/php7/libssl-1_1-x64.dll"
+LoadFile "C:/php7/libssh2.dll"
+
+like:
+
+....
+
+#for php module curl/openssl
+LoadFile "d:/php7/libcrypto-1_1-x64.dll"
+LoadFile "d:/php7/libssl-1_1-x64.dll"
+LoadFile "d:/php7/libssh2.dll"
+#for php curl/openssl
+
+AddHandler application/x-httpd-php .php
+AddType application/x-httpd-php .php .html
+LoadModule php7_module "d:/php7/php7apache2_4.dll"
+PHPIniDir "d:/php7/"
+....
